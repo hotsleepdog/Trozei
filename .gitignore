@@ -1,0 +1,9 @@
+*.info
+*.bin
+*.log
+Library/metadata/00/00000000000000001000000000000000
+Library/metadata/00/00000000000000003000000000000000
+/ProjectSettings/*
+/Library/*
+/obj/*
+/.vs/*
