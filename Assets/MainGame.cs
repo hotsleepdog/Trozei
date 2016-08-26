@@ -20,7 +20,8 @@ public class MainGame : MonoBehaviour {
 
     private int flag = 0;
     public Vector2 _startOffPos;
-
+    private float _speedValue;
+    private float _protectInputTime;
     public enum GameStage
     {
         NOR = 0,
@@ -41,13 +42,26 @@ public class MainGame : MonoBehaviour {
 		_curGameStage = GameStage.NOR;	
 		_norGameState =  gameObject.AddComponent<GameStateNor>();
 		_moveGameState = gameObject.AddComponent<GameStateMove>();
-	}
+
+        _speedValue = 4.0f;
+        _protectInputTime = 0.0f;
+    }
+
+    public float getSpeedValue()
+    {
+        return _speedValue;
+    }
 
     void Start()
     {            
         _curState = _norGameState;
         _curState.enterState();
 
+    }
+
+   public  void startProtect()
+    {
+        _protectInputTime = Time.time + 0.3f;
     }
 
    public void changeStage(GameStage stage)
@@ -77,6 +91,11 @@ public class MainGame : MonoBehaviour {
 
     void HandleInput()
     {
+        if(Time.time < _protectInputTime)
+        {
+            return;
+        }
+
         if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Moved)
         {
             Vector2 touchDeltaPosition = Input.GetTouch(0).deltaPosition;
@@ -115,23 +134,31 @@ public class MainGame : MonoBehaviour {
 
         if(Input.GetMouseButtonDown(0))
         {
-            _curState.handleInput(BaseGameState.GameInputEvent.MoveDown, 1);
+            _curState.handleInput(BaseGameState.GameInputEvent.MoveLeft, 0);
+        }
+        else if (Input.GetMouseButtonDown(1))
+        {
+            _curState.handleInput(BaseGameState.GameInputEvent.MoveRight, 0);
+        }
+        else if (Input.GetMouseButtonDown(2))
+        {
+            _curState.handleInput(BaseGameState.GameInputEvent.MoveUp, 1);
         }
     }
 
     // Update is called once per frames
     void Update()
     {
-        if (Time.time >= _creatTargetTime && flag < 2)
+        if (Time.time >= _creatTargetTime && flag < 40)
         {
             int idx = Random.Range(0, 12);
             _block.GetComponent<BlockAni>()._picidx = idx * 3;
 
-            int x = Random.Range(0, 5);
-            x = 1;         
+            int x = Random.Range(0, 5);        
             GameObject temp = Instantiate(_block);
             temp.GetComponent<BlockAni>().setPosByArrIdx(x, 11);
-            _creatTargetTime = Time.time + _newBlcokDur;
+            temp.GetComponent<BlockAni>().setBlockState(BlockAni.BlockState.Down);
+           _creatTargetTime = Time.time + _newBlcokDur;
 
 			_block.GetComponent<BlockAni>()._lastPso.x = x;
 			_block.GetComponent<BlockAni>()._lastPso.y = 11;
@@ -157,7 +184,7 @@ public class MainGame : MonoBehaviour {
     void OnGUI()
     {
         string str = "";
-        for (int i = 0; i < 12; i++)
+        for (int i = 11; i >= 0; i--)
         {
             str += "\n";
             for(int j = 0; j < 6; j++)
@@ -199,6 +226,7 @@ public class MainGame : MonoBehaviour {
                 if (cspos.y < 0)
                 {
                     cs.setPosByArrIdx(col, 0);
+                    cs.setBlockState(BlockAni.BlockState.Nor);
                     cspos.y = 0;
                 }
 
@@ -211,6 +239,7 @@ public class MainGame : MonoBehaviour {
                             if (_arrSpriteIcon[col, row] != _arrAllBlock[i])
                             {
                                 cs.setPosByArrIdx(col, row + 1);
+                                cs.setBlockState(BlockAni.BlockState.Nor);
                             }
 
                         }
@@ -221,7 +250,10 @@ public class MainGame : MonoBehaviour {
                             cs.setLastPos(cspos);
                         }
                     }
-
+                }
+                else
+                {
+                 
                 }
             }
         }

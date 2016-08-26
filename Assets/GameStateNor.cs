@@ -20,7 +20,14 @@ public class GameStateNor : BaseGameState {
 
     public override void leaveState()
     {
-        
+        //List<GameObject> all = _mainGame.GetComponent<MainGame>()._arrAllBlock;
+        //for (int i = 0; i < all.Count; i++)
+        //{
+        //    if(all[i].GetComponent<BlockAni>().getBlockState() == BlockAni.BlockState.Nor)
+        //    {
+        //        all[i].GetComponent<BlockAni>().setLastPosCur();
+        //    }
+        //}
     }
 
     public override void StateUpdate()

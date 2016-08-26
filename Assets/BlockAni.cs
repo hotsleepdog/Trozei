@@ -13,7 +13,7 @@ public class BlockAni : MonoBehaviour {
 
 	public Vector2 _lastPso;
     private GameObject _mainGame;
-	private Vector2 _offSizePos;
+    private float _speedValue;
     public enum BlockState
     {
         UnActive = 0,
@@ -32,14 +32,13 @@ public class BlockAni : MonoBehaviour {
         _mainGame = GameObject.FindGameObjectWithTag("MainCamera");
         _blockSize = new Vector2(0.6f, 0.6f);
         _startOffPos = new Vector2(0.0f, 0.0f);	
-		_curState = BlockState.UnActive;
+		_curState = BlockState.UnActive;     
     }
 
     // Use this for initialization
     void Start () {
         _nextChangeFrameTime = Time.time + _aniDur;     
-        _curState = BlockState.Down;
-
+       
         string url = "icons/"+_picidx;
         Sprite sprite0 = Resources.Load<Sprite>(url);
         GetComponent<SpriteRenderer>().sprite = sprite0;
@@ -54,7 +53,7 @@ public class BlockAni : MonoBehaviour {
         _arrSpriteFrames[1] = sprite1;
         _arrSpriteFrames[2] = sprite2;
 
- 
+        _speedValue = _mainGame.GetComponent<MainGame>().getSpeedValue();
     }
 	
 	// Update is called once per frame
@@ -69,7 +68,7 @@ public class BlockAni : MonoBehaviour {
         }
     }
 
-    public Vector2 getPosInArry(){
+    public Vector2 getPosInArry(){    
         Vector3 pos = GetComponent<Transform>().transform.position;
         pos.x -= _blockSize.x / 2.0f;
         pos.y -= _blockSize.y / 2.0f;
@@ -87,8 +86,15 @@ public class BlockAni : MonoBehaviour {
         GetComponent<Transform>().transform.position = new Vector3(tx, ty, GetComponent<Transform>().transform.position.z);
     }
 
+    public void setLasePosX()
+    {
+        int x = (int)_lastPso.x;
+        float tx = _startOffPos.x + x * _blockSize.x + _blockSize.x / 2.0f;
+        GetComponent<Transform>().transform.position = new Vector3(tx, GetComponent<Transform>().transform.position.y, GetComponent<Transform>().transform.position.z);
+    }
+
     public void updatePos() {   
-        GetComponent<Transform>().transform.Translate(Vector3.down * Time.deltaTime);      
+        GetComponent<Transform>().transform.Translate(Vector3.down * Time.deltaTime * _speedValue);      
     }
 
     public void setLastPos(Vector2 lastpos)
@@ -98,7 +104,7 @@ public class BlockAni : MonoBehaviour {
 
 	public void setLastPosCur()
 	{
-
+        setPosByArrIdx((int)_lastPso.x, (int)_lastPso.y);
 	}
 
     public BlockState getBlockState()
