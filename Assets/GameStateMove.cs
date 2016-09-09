@@ -211,6 +211,8 @@ public class GameStateMove : BaseGameState {
         }
 
         _needMoveArr.Clear();
+
+        _mainGame.GetComponent<MainGame>().checkDel();
     }
 
     public override void StateUpdate() {

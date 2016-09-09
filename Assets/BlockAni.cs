@@ -14,6 +14,8 @@ public class BlockAni : MonoBehaviour {
 	public Vector2 _lastPso;
     private GameObject _mainGame;
     private float _speedValue;
+
+    public bool _isChecked;
     public enum BlockState
     {
         UnActive = 0,
@@ -32,7 +34,8 @@ public class BlockAni : MonoBehaviour {
         _mainGame = GameObject.FindGameObjectWithTag("MainCamera");
         _blockSize = new Vector2(0.6f, 0.6f);
         _startOffPos = new Vector2(0.0f, 0.0f);	
-		_curState = BlockState.UnActive;     
+		_curState = BlockState.UnActive;
+        _isChecked = false;
     }
 
     // Use this for initialization
@@ -115,5 +118,10 @@ public class BlockAni : MonoBehaviour {
     public void setBlockState(BlockState state)
     {
         _curState = state;
+    }
+
+    public int getPicIdx()
+    {
+        return _picidx;
     }
 }

@@ -22,6 +22,11 @@ public class MainGame : MonoBehaviour {
     public Vector2 _startOffPos;
     private float _speedValue;
     private float _protectInputTime;
+
+    private Vector2 _moveTouchPos;
+    private Vector2 _moveWorldPos;
+    private int _curNeedComboNum = 4;
+    private List<WaitingForDelStruct> _arrNeedDelList;
     public enum GameStage
     {
         NOR = 0,
@@ -45,6 +50,11 @@ public class MainGame : MonoBehaviour {
 
         _speedValue = 4.0f;
         _protectInputTime = 0.0f;
+        _blockSize = new Vector2(0.60f, 0.60f);
+        GetComponent<Camera>().aspect = 480.0f / 800.0f;
+        Debug.Log("awark:" + _arrWidth);
+
+        _arrNeedDelList = new List<WaitingForDelStruct>();
     }
 
     public float getSpeedValue()
@@ -56,6 +66,7 @@ public class MainGame : MonoBehaviour {
     {            
         _curState = _norGameState;
         _curState.enterState();
+        Debug.Log(_arrWidth);
 
     }
 
@@ -99,20 +110,32 @@ public class MainGame : MonoBehaviour {
         if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Moved)
         {
             Vector2 touchDeltaPosition = Input.GetTouch(0).deltaPosition;
+            if(touchDeltaPosition.magnitude < 10.0f)
+            {
+                return;
+            }
             Debug.Log(touchDeltaPosition);
             if(Mathf.Abs(touchDeltaPosition.x) > Mathf.Abs(touchDeltaPosition.y))
             {
                 if(touchDeltaPosition.x > 0)
                 {
-                    Vector2 temptouchpos = new Vector2(Input.GetTouch(0).position.x, Input.GetTouch(0).position.y);
-                    Vector3 worldpos =  Camera.main.ScreenToWorldPoint(temptouchpos);                   
-                    _curState.handleInput(BaseGameState.GameInputEvent.MoveLeft, (int)getPosInArry(new Vector2(worldpos.x, worldpos.y)).y);
+                    Vector2 temptouchpos = new Vector2(Input.GetTouch(0).position.x, Input.GetTouch(0).position.y);                  
+                    Vector3 worldpos =  Camera.main.ScreenToWorldPoint(temptouchpos);
+
+                    _moveTouchPos = temptouchpos;
+                    _moveWorldPos = worldpos;
+
+                    _curState.handleInput(BaseGameState.GameInputEvent.MoveRight, (int)getPosInArry(new Vector2(worldpos.x, worldpos.y)).y);
                 }
                 else
                 {
                     Vector2 temptouchpos = new Vector2(Input.GetTouch(0).position.x, Input.GetTouch(0).position.y);
                     Vector3 worldpos = Camera.main.ScreenToWorldPoint(temptouchpos);
-                    _curState.handleInput(BaseGameState.GameInputEvent.MoveRight, (int)getPosInArry(new Vector2(worldpos.x, worldpos.y)).y);
+
+                    _moveTouchPos = temptouchpos;
+                    _moveWorldPos = worldpos;
+
+                    _curState.handleInput(BaseGameState.GameInputEvent.MoveLeft, (int)getPosInArry(new Vector2(worldpos.x, worldpos.y)).y);
                 }
             }
             else
@@ -121,37 +144,45 @@ public class MainGame : MonoBehaviour {
                 {
                     Vector2 temptouchpos = new Vector2(Input.GetTouch(0).position.x, Input.GetTouch(0).position.y);
                     Vector3 worldpos = Camera.main.ScreenToWorldPoint(temptouchpos);
+
+                    _moveTouchPos = temptouchpos;
+                    _moveWorldPos = worldpos;
+
                     _curState.handleInput(BaseGameState.GameInputEvent.MoveUp, (int)getPosInArry(new Vector2(worldpos.x, worldpos.y)).x);
                 }
                 else
                 {
                     Vector2 temptouchpos = new Vector2(Input.GetTouch(0).position.x, Input.GetTouch(0).position.y);
                     Vector3 worldpos = Camera.main.ScreenToWorldPoint(temptouchpos);
+
+                    _moveTouchPos = temptouchpos;
+                    _moveWorldPos = worldpos;
+
                     _curState.handleInput(BaseGameState.GameInputEvent.MoveDown, (int)getPosInArry(new Vector2(worldpos.x, worldpos.y)).x);
                 }
             }
         }
 
-        if(Input.GetMouseButtonDown(0))
-        {
-            _curState.handleInput(BaseGameState.GameInputEvent.MoveLeft, 0);
-        }
-        else if (Input.GetMouseButtonDown(1))
-        {
-            _curState.handleInput(BaseGameState.GameInputEvent.MoveRight, 0);
-        }
-        else if (Input.GetMouseButtonDown(2))
-        {
-            _curState.handleInput(BaseGameState.GameInputEvent.MoveUp, 1);
-        }
+        //else if(Input.GetMouseButtonDown(0))
+        //{
+        //    _curState.handleInput(BaseGameState.GameInputEvent.MoveLeft, 0);
+        //}
+        //else if (Input.GetMouseButtonDown(1))
+        //{
+        //    _curState.handleInput(BaseGameState.GameInputEvent.MoveRight, 0);
+        //}
+        //else if (Input.GetMouseButtonDown(2))
+        //{
+        //    _curState.handleInput(BaseGameState.GameInputEvent.MoveUp, 1);
+        //}
     }
 
     // Update is called once per frames
     void Update()
     {
-        if (Time.time >= _creatTargetTime && flag < 40)
+        if (Time.time >= _creatTargetTime && flag < 45)
         {
-            int idx = Random.Range(0, 12);
+            int idx = Random.Range(0, 12);          
             _block.GetComponent<BlockAni>()._picidx = idx * 3;
 
             int x = Random.Range(0, 5);        
@@ -170,15 +201,45 @@ public class MainGame : MonoBehaviour {
 
         _curState.StateUpdate();
         HandleInput();
+        tryDelBlocks();
+
+    }
+
+    public void tryDelBlocks()
+    {
+        for (int i = _arrNeedDelList.Count - 1; i >= 0; i--)
+        {
+            _arrNeedDelList[i].updateTime();
+            if (!_arrNeedDelList[i]._activity)
+                _arrNeedDelList.RemoveAt(i);
+        }
+
+        for (int j = 11; j >= 0; j--)
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                if (_arrSpriteIcon[i, j] != null)
+                {
+                    BlockAni cs = (_arrSpriteIcon[i, j]).GetComponent<BlockAni>();
+                    if(cs.getBlockState() == BlockAni.BlockState.ShouldDel)
+                    {
+                        GameObject temp = _arrSpriteIcon[i, j];
+                        _arrAllBlock.Remove(_arrSpriteIcon[i, j]);
+                        _arrSpriteIcon[i, j] = null;
+                       Destroy(temp);
+                    }
+                }
+            }
+        }      
     }
 
     public Vector2 getPosInArry(Vector2 truepos)
     {
         float x = ((truepos.x - _startOffPos.x) / _blockSize.x);
-        float y = (int)(truepos.y / _blockSize.y);
+        float y = ((truepos.y ) / _blockSize.y);
         if (truepos.y < 0)
             y -= 1;
-        return new Vector2(x, y);
+        return new Vector2(x,y);
     }
 
     void OnGUI()
@@ -201,7 +262,9 @@ public class MainGame : MonoBehaviour {
         }
         GUI.Label(new Rect(10, 10, 200, 800), str);
         string str2 = "";
-        str2 += _curGameStage;
+        str2 += _moveWorldPos;
+        str2 += "\n";
+        str2 += getPosInArry(_moveWorldPos);
         GUI.Label(new Rect(10, 300, 300, 800), str2);
     }
 
@@ -211,7 +274,7 @@ public class MainGame : MonoBehaviour {
         {
 
             BlockAni cs = (_arrAllBlock[i]).GetComponent<BlockAni>();
-            if (cs.getBlockState() != BlockAni.BlockState.Move)
+            if (cs.getBlockState() != BlockAni.BlockState.Move && cs.getBlockState() != BlockAni.BlockState.WaitingDel && cs.getBlockState() != BlockAni.BlockState.ShouldDel)
             {
                 cs.updatePos();
 
@@ -226,6 +289,11 @@ public class MainGame : MonoBehaviour {
                 if (cspos.y < 0)
                 {
                     cs.setPosByArrIdx(col, 0);
+                    if(cs.getBlockState() != BlockAni.BlockState.Nor)
+                    {
+                        Debug.Log("check < 0");
+                        checkDel();
+                    }
                     cs.setBlockState(BlockAni.BlockState.Nor);
                     cspos.y = 0;
                 }
@@ -239,6 +307,11 @@ public class MainGame : MonoBehaviour {
                             if (_arrSpriteIcon[col, row] != _arrAllBlock[i])
                             {
                                 cs.setPosByArrIdx(col, row + 1);
+                                if (cs.getBlockState() != BlockAni.BlockState.Nor)
+                                {
+                                    Debug.Log("check down");
+                                    checkDel();
+                                }
                                 cs.setBlockState(BlockAni.BlockState.Nor);
                             }
 
@@ -255,6 +328,190 @@ public class MainGame : MonoBehaviour {
                 {
                  
                 }
+            }
+        }
+    }
+
+    public void checkDel()
+    {
+
+        List<GameObject> tempCheckList = new List<GameObject>();
+
+        for(int i = 0; i < _arrWidth; i++ )
+        {
+            for(int j = 0; j < _arrHeight; j++)
+            {
+                if(_arrSpriteIcon[i,j]!=null)
+                {
+                    BlockAni cs = (_arrSpriteIcon[i, j]).GetComponent<BlockAni>();
+
+                    if(cs.getBlockState() == BlockAni.BlockState.WaitingDel)
+                    {
+                        continue;
+                    }
+
+                    if(tempCheckList.Count == 0)
+                    {
+                        tempCheckList.Add(_arrSpriteIcon[i, j]);
+                    }
+                    else
+                    {
+                        BlockAni lastTempBlack = (tempCheckList[tempCheckList.Count - 1]).GetComponent<BlockAni>();
+                        if (lastTempBlack.getPicIdx() == cs.getPicIdx())
+                        {
+                            tempCheckList.Add(_arrSpriteIcon[i, j]);
+                        }
+                        else
+                        {
+                            if(tempCheckList.Count >= _curNeedComboNum)
+                            {
+                                WaitingForDelStruct del = new WaitingForDelStruct();                              
+                                foreach(GameObject temp in tempCheckList)
+                                {
+                                    del.pushWaitingDelObject(temp);
+                                }
+                                _arrNeedDelList.Add(del);
+                            }
+                           
+                            tempCheckList.Clear();                            
+                        }
+                    }
+                   
+                }
+                else
+                {
+                    if (tempCheckList.Count >= _curNeedComboNum)
+                    {
+                        WaitingForDelStruct del = new WaitingForDelStruct();
+                        foreach (GameObject temp in tempCheckList)
+                        {
+                            del.pushWaitingDelObject(temp);
+                        }
+
+                        _arrNeedDelList.Add(del);
+                    }
+                    tempCheckList.Clear();
+                }
+            }
+
+            if (tempCheckList.Count >= _curNeedComboNum)
+            {
+                WaitingForDelStruct del = new WaitingForDelStruct();
+                foreach (GameObject temp in tempCheckList)
+                {
+                    del.pushWaitingDelObject(temp);
+                }
+
+                _arrNeedDelList.Add(del);
+            }         
+           tempCheckList.Clear();           
+        }
+
+        checkDel2();
+    }
+
+    public void checkDel2()
+    {
+
+        List<GameObject> tempCheckList = new List<GameObject>();
+
+        for (int i = 0; i < _arrHeight; i++)
+        {
+            for (int j = 0; j < _arrWidth; j++)
+            {
+                if (_arrSpriteIcon[j, i] != null)
+                {
+                    BlockAni cs = (_arrSpriteIcon[j, i]).GetComponent<BlockAni>();
+
+                    if (cs.getBlockState() == BlockAni.BlockState.WaitingDel)
+                    {
+                        continue;
+                    }
+
+                    if (tempCheckList.Count == 0)
+                    {
+                        tempCheckList.Add(_arrSpriteIcon[j, i]);
+                    }
+                    else
+                    {
+                        BlockAni lastTempBlack = (tempCheckList[tempCheckList.Count - 1]).GetComponent<BlockAni>();
+                        if (lastTempBlack.getPicIdx() == cs.getPicIdx())
+                        {
+                            tempCheckList.Add(_arrSpriteIcon[j, i]);
+                        }
+                        else
+                        {
+                            if (tempCheckList.Count >= _curNeedComboNum)
+                            {
+                                WaitingForDelStruct del = new WaitingForDelStruct();
+                                foreach (GameObject temp in tempCheckList)
+                                {
+                                    del.pushWaitingDelObject(temp);
+                                }
+                                _arrNeedDelList.Add(del);
+                            }
+
+                            tempCheckList.Clear();
+                        }
+                    }
+
+                }
+                else
+                {
+                    if (tempCheckList.Count >= _curNeedComboNum)
+                    {
+                        WaitingForDelStruct del = new WaitingForDelStruct();
+                        foreach (GameObject temp in tempCheckList)
+                        {
+                            del.pushWaitingDelObject(temp);
+                        }
+
+                        _arrNeedDelList.Add(del);
+                    }
+                    tempCheckList.Clear();
+                }
+            }
+
+            if (tempCheckList.Count >= _curNeedComboNum)
+            {
+                WaitingForDelStruct del = new WaitingForDelStruct();
+                foreach (GameObject temp in tempCheckList)
+                {
+                    del.pushWaitingDelObject(temp);
+                }
+
+                _arrNeedDelList.Add(del);
+            }
+            tempCheckList.Clear();
+        }
+    }
+
+    public class WaitingForDelStruct
+    {
+        public List<GameObject> _waitingList = new List<GameObject>();      
+        public float _durTime = 0.5f;
+        public bool _activity = true;
+        public void pushWaitingDelObject(GameObject pushobject)
+        {
+            if (!pushobject)
+                Debug.Log("arr");
+
+            BlockAni cs = (pushobject).GetComponent<BlockAni>();
+            cs.setBlockState(BlockAni.BlockState.WaitingDel);
+            _waitingList.Add(pushobject);
+        }
+
+        public void updateTime()
+        {
+            _durTime -= Time.deltaTime;
+            if(_activity && _durTime <= 0.0f)
+            {
+                foreach (GameObject temp in _waitingList)
+                {
+                    BlockAni cs = (temp).GetComponent<BlockAni>();
+                    cs.setBlockState(BlockAni.BlockState.ShouldDel);
+                }
+                _activity = false;
             }
         }
     }
