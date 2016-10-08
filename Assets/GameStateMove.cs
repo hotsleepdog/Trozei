@@ -23,7 +23,7 @@ public class GameStateMove : BaseGameState {
         _isStart = true;
       
         _speedValue = _mainGame.GetComponent<MainGame>().getSpeedValue();
-        _moveDur = 0.6f / _speedValue;
+        _moveDur = GameConfig.TROZEI_SIZE / _speedValue;
     }
 
     public override void enterState() {
@@ -52,13 +52,13 @@ public class GameStateMove : BaseGameState {
             GameObject clonetemp = null;
             if (_arrSpriteIcon[cloneidx, _moveConfig])
             {
-                _arrSpriteIcon[cloneidx, _moveConfig].GetComponent<BlockAni>().setBlockState(BlockAni.BlockState.Move);
+                _arrSpriteIcon[cloneidx, _moveConfig].GetComponent<BlockAni>()._curState = (BlockAni.BlockState.Move);
                 clonetemp = Instantiate(_arrSpriteIcon[cloneidx, _moveConfig]);
                 clonetemp.GetComponent<BlockAni>().setPosByArrIdx(totalnum, _moveConfig);
                 _needMoveArr.Add(clonetemp);
                 _mainGame.GetComponent<MainGame>()._arrAllBlock.Add(clonetemp);
 
-                clonetemp.GetComponent<BlockAni>().setLastPos(new Vector2(totalnum - 1, _moveConfig));
+                clonetemp.GetComponent<BlockAni>()._lastPos = (new Vector2(totalnum - 1, _moveConfig));
                
             }
 
@@ -69,7 +69,7 @@ public class GameStateMove : BaseGameState {
                 _arrSpriteIcon[i, _moveConfig] = _arrSpriteIcon[i + 1, _moveConfig];
                 if (_arrSpriteIcon[i, _moveConfig] != null)
                 {
-                    _arrSpriteIcon[i, _moveConfig].GetComponent<BlockAni>().setLastPos(new Vector2(i, _moveConfig));
+                    _arrSpriteIcon[i, _moveConfig].GetComponent<BlockAni>()._lastPos = (new Vector2(i, _moveConfig));
                 }
             }
             _arrSpriteIcon[spidx, _moveConfig] = clonetemp;
@@ -94,13 +94,13 @@ public class GameStateMove : BaseGameState {
             GameObject clonetemp = null;
             if (_arrSpriteIcon[cloneidx, _moveConfig])
             {
-                _arrSpriteIcon[cloneidx, _moveConfig].GetComponent<BlockAni>().setBlockState(BlockAni.BlockState.Move);
+                _arrSpriteIcon[cloneidx, _moveConfig].GetComponent<BlockAni>()._curState = (BlockAni.BlockState.Move);
                 clonetemp = Instantiate(_arrSpriteIcon[cloneidx, _moveConfig]);
                 clonetemp.GetComponent<BlockAni>().setPosByArrIdx(-1, _moveConfig);
                 _needMoveArr.Add(clonetemp);
                 _mainGame.GetComponent<MainGame>()._arrAllBlock.Add(clonetemp);
 
-                clonetemp.GetComponent<BlockAni>().setLastPos(new Vector2(spidx, _moveConfig));
+                clonetemp.GetComponent<BlockAni>()._lastPos = (new Vector2(spidx, _moveConfig));
 
             }
 
@@ -111,7 +111,7 @@ public class GameStateMove : BaseGameState {
                 _arrSpriteIcon[i, _moveConfig] = _arrSpriteIcon[i - 1, _moveConfig];
                 if (_arrSpriteIcon[i, _moveConfig] != null)
                 {
-                    _arrSpriteIcon[i, _moveConfig].GetComponent<BlockAni>().setLastPos(new Vector2(i, _moveConfig));
+                    _arrSpriteIcon[i, _moveConfig].GetComponent<BlockAni>()._lastPos = (new Vector2(i, _moveConfig));
                 }
             }
             _arrSpriteIcon[spidx, _moveConfig] = clonetemp;
@@ -129,7 +129,7 @@ public class GameStateMove : BaseGameState {
             {
                 if (_arrSpriteIcon[_moveConfig, i] != null)
                 {
-                    if (_arrSpriteIcon[_moveConfig, i].GetComponent<BlockAni>().getBlockState() == BlockAni.BlockState.Nor)
+                    if (_arrSpriteIcon[_moveConfig, i].GetComponent<BlockAni>()._curState == BlockAni.BlockState.Nor)
                         _needMoveArr.Add(_arrSpriteIcon[_moveConfig, i]);
                 }
             }
@@ -137,13 +137,13 @@ public class GameStateMove : BaseGameState {
             GameObject clonetemp = null;
             if (_arrSpriteIcon[_moveConfig, cloneidx])
             {
-                _arrSpriteIcon[_moveConfig, cloneidx].GetComponent<BlockAni>().setBlockState(BlockAni.BlockState.Move);
+                _arrSpriteIcon[_moveConfig, cloneidx].GetComponent<BlockAni>()._curState = (BlockAni.BlockState.Move);
                 clonetemp = Instantiate(_arrSpriteIcon[_moveConfig, cloneidx]);
                 clonetemp.GetComponent<BlockAni>().setPosByArrIdx(_moveConfig, totalnum);
                 _needMoveArr.Add(clonetemp);
                 _mainGame.GetComponent<MainGame>()._arrAllBlock.Add(clonetemp);
 
-                clonetemp.GetComponent<BlockAni>().setLastPos(new Vector2(_moveConfig, spidx));
+                clonetemp.GetComponent<BlockAni>()._lastPos = (new Vector2(_moveConfig, spidx));
 
             }
 
@@ -154,7 +154,7 @@ public class GameStateMove : BaseGameState {
                 _arrSpriteIcon[_moveConfig, i] = _arrSpriteIcon[_moveConfig, i + 1];
                 if (_arrSpriteIcon[_moveConfig, i] != null)
                 {
-                    _arrSpriteIcon[_moveConfig, i].GetComponent<BlockAni>().setLastPos(new Vector2(_moveConfig, i));
+                    _arrSpriteIcon[_moveConfig, i].GetComponent<BlockAni>()._lastPos = (new Vector2(_moveConfig, i));
                 }
             }
             _arrSpriteIcon[_moveConfig, spidx] = clonetemp;
@@ -171,7 +171,7 @@ public class GameStateMove : BaseGameState {
             {
                 if (_arrSpriteIcon[_moveConfig, i] != null)
                 {
-                    if (_arrSpriteIcon[_moveConfig, i].GetComponent<BlockAni>().getBlockState() == BlockAni.BlockState.Nor)
+                    if (_arrSpriteIcon[_moveConfig, i].GetComponent<BlockAni>()._curState == BlockAni.BlockState.Nor)
                         _needMoveArr.Add(_arrSpriteIcon[_moveConfig, i]);
                 }
             }
@@ -183,14 +183,14 @@ public class GameStateMove : BaseGameState {
                 _arrSpriteIcon[_moveConfig, i] = _arrSpriteIcon[_moveConfig, i - 1];
                 if (_arrSpriteIcon[_moveConfig, i] != null)
                 {
-                    _arrSpriteIcon[_moveConfig, i].GetComponent<BlockAni>().setLastPos(new Vector2(_moveConfig, i));
+                    _arrSpriteIcon[_moveConfig, i].GetComponent<BlockAni>()._lastPos = (new Vector2(_moveConfig, i));
                 }
             }
             _arrSpriteIcon[_moveConfig, 0] = null;
         }
         for (int i = 0; i < _needMoveArr.Count; i++)
         {
-            _needMoveArr[i].GetComponent<BlockAni>().setBlockState(BlockAni.BlockState.Move);
+            _needMoveArr[i].GetComponent<BlockAni>()._curState = (BlockAni.BlockState.Move);
         }
     }
     public override void leaveState() {
@@ -206,8 +206,7 @@ public class GameStateMove : BaseGameState {
         for (int i = 0; i < _needMoveArr.Count; i++)
         {
             // ((GameObject)_needMoveArr[i]).GetComponent<BlockAni>().setLastPosCur();
-           ((GameObject)_needMoveArr[i]).GetComponent<BlockAni>().setLasePosX();
-            _needMoveArr[i].GetComponent<BlockAni>().setBlockState(BlockAni.BlockState.Nor);
+            _needMoveArr[i].GetComponent<BlockAni>()._curState = (BlockAni.BlockState.Nor);
         }
 
         _needMoveArr.Clear();

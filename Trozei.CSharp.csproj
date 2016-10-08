@@ -71,9 +71,11 @@
   <ItemGroup>
     <Compile Include="Assets\BaseGameState.cs" />
     <Compile Include="Assets\BlockAni.cs" />
+    <Compile Include="Assets\GameConfig.cs" />
     <Compile Include="Assets\GameStateMove.cs" />
     <Compile Include="Assets\GameStateNor.cs" />
     <Compile Include="Assets\MainGame.cs" />
+    <Compile Include="Assets\WaitingForDelStruct.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
 </Project>
