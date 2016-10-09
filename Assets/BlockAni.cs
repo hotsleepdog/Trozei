@@ -68,4 +68,8 @@ public class BlockAni : MonoBehaviour {
         }
              
     }
+
+    public void setLastPosCur() {
+        setPosByArrIdx((int)_lastPos.x, (int)_lastPos.y);
+    }
 }

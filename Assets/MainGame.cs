@@ -6,8 +6,8 @@ using System.Collections.Generic;
 public class MainGame : MonoBehaviour {
     public Vector2 _blockSize;
     public GameObject[,] _arrSpriteIcon;
-    public int _arrWidth;
-    public int _arrHeight;
+    private int _arrWidth = GameConfig.GAMECOLUMN;
+    private int _arrHeight = GameConfig.GAMEROW;
     public GameObject _block;
     public float _newBlcokDur;
 	private float _creatTargetTime;
@@ -38,7 +38,7 @@ public class MainGame : MonoBehaviour {
 
 	void Awake()
 	{
-		_newBlcokDur = 3.0f;
+		_newBlcokDur = 1.0f;
 		_creatTargetTime = Time.time + _newBlcokDur;
 
 		_arrAllBlock = new List<GameObject>();
@@ -50,7 +50,7 @@ public class MainGame : MonoBehaviour {
 
         _speedValue = GameConfig.SPEED_DOWN;
         _protectInputTime = 0.0f;
-        _blockSize = new Vector2(0.60f, 0.60f);
+        _blockSize = new Vector2(GameConfig.TROZEI_SIZE, GameConfig.TROZEI_SIZE);
         GetComponent<Camera>().aspect = 480.0f / 800.0f;
         Debug.Log("awark:" + _arrWidth);
 
@@ -165,12 +165,12 @@ public class MainGame : MonoBehaviour {
 
         if(Input.GetMouseButtonDown(0))
         {
-            _curState.handleInput(BaseGameState.GameInputEvent.MoveLeft, 0);
+           _curState.handleInput(BaseGameState.GameInputEvent.MoveDown, 0);
         }
-        //else if (Input.GetMouseButtonDown(1))
+       // else if (Input.GetMouseButtonDown(1))
         //{
-        //    _curState.handleInput(BaseGameState.GameInputEvent.MoveRight, 0);
-        //}
+       //     _curState.handleInput(BaseGameState.GameInputEvent.MoveRight, 0);
+       // }
         //else if (Input.GetMouseButtonDown(2))
         //{
         //    _curState.handleInput(BaseGameState.GameInputEvent.MoveUp, 1);
@@ -180,12 +180,12 @@ public class MainGame : MonoBehaviour {
     // Update is called once per frames
     void Update()
     {
-        if (Time.time >= _creatTargetTime && flag < 50)
+        if (Time.time >= _creatTargetTime && flag < 1)
         {
             int idx = Random.Range(0, 6);
-            int x = Random.Range(0, GameConfig.GAMECOLUMN); ;        
+            int x = Random.Range(0, GameConfig.GAMECOLUMN);    
             GameObject temp = Instantiate(_block);
-            temp.GetComponent<BlockAni>().setPosByArrIdx(x, GameConfig.GAMEROW - 1);
+            temp.GetComponent<BlockAni>().setPosByArrIdx(0, GameConfig.GAMEROW - 1);
             temp.GetComponent<BlockAni>()._curState = (BlockAni.BlockState.Down);           
             temp.GetComponent<BlockAni>()._lastPos = new Vector2(x, GameConfig.GAMEROW - 1);
             temp.GetComponent<BlockAni>()._picidx = idx;
@@ -211,9 +211,9 @@ public class MainGame : MonoBehaviour {
                 _arrNeedDelList.RemoveAt(i);
         }
 
-        for (int j = 11; j >= 0; j--)
+        for (int j = GameConfig.GAMEROW - 1; j >= 0; j--)
         {
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < GameConfig.GAMECOLUMN; i++)
             {
                 if (_arrSpriteIcon[i, j] != null)
                 {
@@ -346,7 +346,7 @@ public class MainGame : MonoBehaviour {
                     BlockAni cs = _arrSpriteIcon[col, row].GetComponent<BlockAni>();
                     int checkPicId = cs._picidx;
 
-                    if (cs._curState == BlockAni.BlockState.WaitingDel || cs._curState == BlockAni.BlockState.ShouldDel)
+                    if (cs._curState == BlockAni.BlockState.WaitingDel || cs._curState == BlockAni.BlockState.ShouldDel || cs._curState == BlockAni.BlockState.Move)
                     {
                         break;
                     }
@@ -372,9 +372,22 @@ public class MainGame : MonoBehaviour {
                             int curId = tempcs._picidx;
                             if (curId == checkPicId && tempcs._bCheckCol == false)
                             {
-                                tempcs._bCheckCol = true;
-                                tempColList.Add(_arrSpriteIcon[tempCol, row]);
-                                checklist.Add(_arrSpriteIcon[tempCol, row]);
+                                if (tempcs._curState == BlockAni.BlockState.WaitingDel)
+                                {
+                                    WaitingForDelStruct tempstruct = getWaitingStructById(tempcs._uniqueId);
+                                    tempstruct.pushWaitingDelObject(_arrSpriteIcon[tempCol, row]);
+                                    tempstruct.resetTime();
+                                    tempcs._bCheckCol = true;
+                                    checklist.Add(_arrSpriteIcon[tempCol, row]);
+                                    break;
+                                }
+                                else
+                                {
+                                    tempcs._bCheckCol = true;
+                                    checklist.Add(_arrSpriteIcon[tempCol, row]);
+                                    tempColList.Add(_arrSpriteIcon[tempCol, row]);                                  
+                                }
+                               
                             }
                             else
                             {
@@ -398,9 +411,22 @@ public class MainGame : MonoBehaviour {
                             int curId = tempcs._picidx;
                             if (curId == checkPicId && tempcs._bCheckCol == false)
                             {
-                                tempcs._bCheckCol = true;
-                                tempColList.Add(_arrSpriteIcon[tempCol, row]);
-                                checklist.Add(_arrSpriteIcon[tempCol, row]);
+                                if (tempcs._curState == BlockAni.BlockState.WaitingDel)
+                                {
+                                    WaitingForDelStruct tempstruct = getWaitingStructById(tempcs._uniqueId);
+                                    tempstruct.pushWaitingDelObject(_arrSpriteIcon[tempCol, row]);
+                                    tempstruct.resetTime();
+                                    tempcs._bCheckCol = true;
+                                    checklist.Add(_arrSpriteIcon[tempCol, row]);
+                                    break;
+                                }
+                                else
+                                {
+                                    tempcs._bCheckCol = true;
+                                    checklist.Add(_arrSpriteIcon[tempCol, row]);
+                                    tempColList.Add(_arrSpriteIcon[tempCol, row]);
+                                }
+                               
                             }
                             else
                             {
@@ -425,9 +451,23 @@ public class MainGame : MonoBehaviour {
                             int curId = tempcs._picidx;
                             if (curId == checkPicId && tempcs._bCheckRow == false)
                             {
-                                tempcs._bCheckRow = true;
-                                tempRowList.Add(_arrSpriteIcon[col, tempRow]);
-                                checklist.Add(_arrSpriteIcon[col, tempRow]);
+                                if (tempcs._curState == BlockAni.BlockState.WaitingDel)
+                                {
+                                    WaitingForDelStruct tempstruct = getWaitingStructById(tempcs._uniqueId);
+                                    tempstruct.pushWaitingDelObject(_arrSpriteIcon[col, tempRow]);
+                                    tempstruct.resetTime();
+                                    tempcs._bCheckRow = true;
+                                    checklist.Add(_arrSpriteIcon[col, tempRow]);
+                                    break;
+                                }
+                                else
+                                {
+                                    tempRowList.Add(_arrSpriteIcon[col, tempRow]);
+                                    tempcs._bCheckRow = true;
+                                    checklist.Add(_arrSpriteIcon[col, tempRow]);
+                                }
+                            
+                                
                             }
                             else
                             {
@@ -451,9 +491,23 @@ public class MainGame : MonoBehaviour {
                             int curId = tempcs._picidx;
                             if (curId == checkPicId && tempcs._bCheckRow == false)
                             {
-                                tempcs._bCheckRow = true;
-                                tempRowList.Add(_arrSpriteIcon[col, tempRow]);
-                                checklist.Add(_arrSpriteIcon[col, tempRow]);
+                                if (tempcs._curState == BlockAni.BlockState.WaitingDel)
+                                {
+                                    WaitingForDelStruct tempstruct = getWaitingStructById(tempcs._uniqueId);
+                                    tempstruct.pushWaitingDelObject(_arrSpriteIcon[col, tempRow]);
+                                    tempstruct.resetTime();
+                                    tempcs._bCheckRow = true;
+                                    checklist.Add(_arrSpriteIcon[col, tempRow]);
+                                    break;
+                                }
+                                else
+                                {
+                                    tempRowList.Add(_arrSpriteIcon[col, tempRow]);
+                                    tempcs._bCheckRow = true;
+                                    checklist.Add(_arrSpriteIcon[col, tempRow]);
+                                }
+
+                               
                             }
                             else
                             {
@@ -514,6 +568,18 @@ public class MainGame : MonoBehaviour {
         }
 
         checklist.Clear();
+    }
+
+   public WaitingForDelStruct getWaitingStructById(int id)
+    {
+        int count = _arrNeedDelList.Count;
+        for (int i = 0; i < count; i++)
+        {
+            if (id == _arrNeedDelList[i]._uniqueId)
+                return _arrNeedDelList[i];
+        }
+
+        return null;
     }
 }
 
