@@ -6,12 +6,14 @@ public class BlockAni : MonoBehaviour {
     
     public enum BlockState
     {
-        UnActive = 0,
-        Down = 1,
-        Move = 2,
-        WaitingDel = 3,
+        TopDown = 0,
+        Stand = 1,
+        ReDown = 2,
+        CountDown = 3,
         ShouldDel = 4,
-        Nor = 5,
+        //Move = 5,
+        MoveLR = 6,
+        MoveUpDown = 7
     };
 
     public BlockState _curState { get; set; }
@@ -22,7 +24,7 @@ public class BlockAni : MonoBehaviour {
     public bool _bCheckCol { get; set; }
     void Awake()
     {
-        _curState = BlockState.Down;
+        //_curState = BlockState.Down;
     }
 
     // Use this for initialization
@@ -63,10 +65,7 @@ public class BlockAni : MonoBehaviour {
     }
 
     public void updatePos() {
-        if (_curState == BlockState.Down || _curState == BlockState.Nor) {
-            GetComponent<Transform>().transform.Translate(Vector3.down * Time.deltaTime * GameConfig.SPEED_DOWN);
-        }
-             
+        GetComponent<Transform>().transform.Translate(Vector3.down * Time.deltaTime * GameConfig.SPEED_DOWN);      
     }
 
     public void setLastPosCur() {

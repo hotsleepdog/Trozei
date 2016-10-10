@@ -8,6 +8,7 @@ public class WaitingForDelStruct
     public float _durTime = GameConfig.DEL_DUR;
     public bool _activity = true;
     public int _uniqueId = 0;
+    public bool _needRecovery = false;
 
     public void pushWaitingDelObject(GameObject pushobject)
     {
@@ -19,7 +20,7 @@ public class WaitingForDelStruct
             Debug.Log("arr");
 
         BlockAni cs = (pushobject).GetComponent<BlockAni>();
-        cs._curState = (BlockAni.BlockState.WaitingDel);
+        cs._curState = (BlockAni.BlockState.CountDown);
         cs._uniqueId = _uniqueId;
         _waitingList.Add(pushobject);
     }
@@ -27,7 +28,7 @@ public class WaitingForDelStruct
     public void updateTime()
     {
         _durTime -= Time.deltaTime;
-        if (_activity && _durTime <= 0.0f)
+        if (_activity && _durTime <= 0.0f && _needRecovery == false)
         {
             _activity = false;
             foreach (GameObject temp in _waitingList)
@@ -43,6 +44,15 @@ public class WaitingForDelStruct
     {
         _activity = true;
         _durTime = GameConfig.DEL_DUR;
+    }
+
+    public void resetState()
+    {
+        foreach (GameObject temp in _waitingList)
+        {
+            BlockAni cs = (temp).GetComponent<BlockAni>();
+            cs._curState = (BlockAni.BlockState.Stand);
+        }
     }
 }
 

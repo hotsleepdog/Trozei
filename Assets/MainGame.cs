@@ -91,6 +91,7 @@ public class MainGame : MonoBehaviour {
                 break;
             case GameStage.NOR:
                 _curState = _norGameState;
+                checkDel();
                 break;
             default:
                 _curState = _norGameState;
@@ -163,32 +164,36 @@ public class MainGame : MonoBehaviour {
             }
         }
 
-        if(Input.GetMouseButtonDown(0))
+        if(Input.GetKeyDown(KeyCode.A))
         {
-           _curState.handleInput(BaseGameState.GameInputEvent.MoveDown, 0);
+           _curState.handleInput(BaseGameState.GameInputEvent.MoveLeft, 0);
         }
-       // else if (Input.GetMouseButtonDown(1))
-        //{
-       //     _curState.handleInput(BaseGameState.GameInputEvent.MoveRight, 0);
-       // }
-        //else if (Input.GetMouseButtonDown(2))
-        //{
-        //    _curState.handleInput(BaseGameState.GameInputEvent.MoveUp, 1);
-        //}
+       else if (Input.GetKeyDown(KeyCode.D))
+        {
+            _curState.handleInput(BaseGameState.GameInputEvent.MoveRight, 0);
+        }
+        else if (Input.GetKeyDown(KeyCode.W))
+        {
+           _curState.handleInput(BaseGameState.GameInputEvent.MoveUp, 0);
+        }
+        else if (Input.GetKeyDown(KeyCode.S))
+        {
+            _curState.handleInput(BaseGameState.GameInputEvent.MoveDown, 0);
+        }
     }
 
     // Update is called once per frames
     void Update()
     {
-        if (Time.time >= _creatTargetTime && flag < 1)
+        if (Time.time >= _creatTargetTime && flag < 15)
         {
-            int idx = Random.Range(0, 6);
+            int idx = Random.Range(0, 3);
             int x = Random.Range(0, GameConfig.GAMECOLUMN);    
             GameObject temp = Instantiate(_block);
-            temp.GetComponent<BlockAni>().setPosByArrIdx(0, GameConfig.GAMEROW - 1);
-            temp.GetComponent<BlockAni>()._curState = (BlockAni.BlockState.Down);           
+            temp.GetComponent<BlockAni>().setPosByArrIdx(x, GameConfig.GAMEROW - 1);
+            temp.GetComponent<BlockAni>()._curState = (BlockAni.BlockState.TopDown);           
             temp.GetComponent<BlockAni>()._lastPos = new Vector2(x, GameConfig.GAMEROW - 1);
-            temp.GetComponent<BlockAni>()._picidx = idx;
+            temp.GetComponent<BlockAni>()._picidx = 4;
 
             _creatTargetTime = Time.time + _newBlcokDur;
             _arrAllBlock.Add(temp);
@@ -207,8 +212,21 @@ public class MainGame : MonoBehaviour {
         for (int i = _arrNeedDelList.Count - 1; i >= 0; i--)
         {
             _arrNeedDelList[i].updateTime();
+            bool shouldremove = false;
             if (!_arrNeedDelList[i]._activity)
+                shouldremove = true;
+
+            if (_arrNeedDelList[i]._needRecovery)
+            {
+                _arrNeedDelList[i].resetState();
+                shouldremove = true;
+            }
+
+            if (shouldremove)
+            {
                 _arrNeedDelList.RemoveAt(i);
+            }
+
         }
 
         for (int j = GameConfig.GAMEROW - 1; j >= 0; j--)
@@ -270,7 +288,13 @@ public class MainGame : MonoBehaviour {
         for (int i = 0; i < _arrAllBlock.Count; i++)
         {
 
-            BlockAni cs = (_arrAllBlock[i]).GetComponent<BlockAni>();         
+            BlockAni cs = (_arrAllBlock[i]).GetComponent<BlockAni>();
+
+            if (cs._curState == BlockAni.BlockState.CountDown || cs._curState == BlockAni.BlockState.MoveUpDown || cs._curState == BlockAni.BlockState.MoveLR  || cs._curState == BlockAni.BlockState.ShouldDel)
+            {
+                continue;
+            }
+
             cs.updatePos();
             Vector2 cspos = cs.getPosInArry();
             Vector2 csposlast = cs._lastPos;
@@ -282,12 +306,12 @@ public class MainGame : MonoBehaviour {
            if (cspos.y < 0)
            {
                 cs.setPosByArrIdx(col, 0);
-                if(cs._curState != BlockAni.BlockState.Nor)
+                if(cs._curState != BlockAni.BlockState.Stand)
                 {
                     Debug.Log("check < 0");
                     checkDel();
                 }
-                cs._curState = BlockAni.BlockState.Nor;
+                cs._curState = BlockAni.BlockState.Stand;
                 cspos.y = 0;
             }
 
@@ -300,24 +324,26 @@ public class MainGame : MonoBehaviour {
                         if (_arrSpriteIcon[col, row] != _arrAllBlock[i])
                         {
                             cs.setPosByArrIdx(col, row + 1);
-                            if (cs._curState != BlockAni.BlockState.Nor)
+                            if (cs._curState != BlockAni.BlockState.Stand)
                             {
                                 Debug.Log("check down");
                                 checkDel();
                             }
-                           cs._curState = (BlockAni.BlockState.Nor);
+                           cs._curState = (BlockAni.BlockState.Stand);
                         }
 
                     }
                     else
-                    {
-                        if (rowlast == 0)
-                        {
-                            Debug.Log("error");
-                        }
+                    {                 
                         _arrSpriteIcon[collast, rowlast] = null;
                         _arrSpriteIcon[col, row] = _arrAllBlock[i];
                         cs._lastPos = cspos;
+
+                        if (cs._curState != BlockAni.BlockState.TopDown)
+                        {
+                            cs._curState = (BlockAni.BlockState.ReDown);
+                        }
+
                     }
                 }
             }
@@ -337,7 +363,12 @@ public class MainGame : MonoBehaviour {
         {
             for(int col = 0; col < GameConfig.GAMECOLUMN; col++)
             {
-                
+
+                //bool isRowHaveDeling = false;
+                //bool isColHaveDeling = false;
+                int delingRowIdx = -1;
+                int delingColIdx = -1;
+
                 if (_arrSpriteIcon[col, row] != null)
                 {
                     List<GameObject> tempColList = new List<GameObject>();
@@ -346,16 +377,14 @@ public class MainGame : MonoBehaviour {
                     BlockAni cs = _arrSpriteIcon[col, row].GetComponent<BlockAni>();
                     int checkPicId = cs._picidx;
 
-                    if (cs._curState == BlockAni.BlockState.WaitingDel || cs._curState == BlockAni.BlockState.ShouldDel || cs._curState == BlockAni.BlockState.Move)
+                    if (cs._curState == BlockAni.BlockState.CountDown || cs._curState == BlockAni.BlockState.ShouldDel)
                     {
                         break;
                     }
 
                     if (cs._bCheckCol == false)
                     {
-                        cs._bCheckCol = true;
-                        tempColList.Add(_arrSpriteIcon[col, row]);
-                        tempRowList.Add(_arrSpriteIcon[col, row]);
+                        cs._bCheckCol = true;                
                         checklist.Add(_arrSpriteIcon[col, row]);
                     }
                     else
@@ -372,22 +401,14 @@ public class MainGame : MonoBehaviour {
                             int curId = tempcs._picidx;
                             if (curId == checkPicId && tempcs._bCheckCol == false)
                             {
-                                if (tempcs._curState == BlockAni.BlockState.WaitingDel)
-                                {
-                                    WaitingForDelStruct tempstruct = getWaitingStructById(tempcs._uniqueId);
-                                    tempstruct.pushWaitingDelObject(_arrSpriteIcon[tempCol, row]);
-                                    tempstruct.resetTime();
+                                if (tempcs._curState == BlockAni.BlockState.CountDown)
+                                {                                   
+                                    delingColIdx = tempcs._uniqueId;
+                                }                            
+                                
                                     tempcs._bCheckCol = true;
                                     checklist.Add(_arrSpriteIcon[tempCol, row]);
-                                    break;
-                                }
-                                else
-                                {
-                                    tempcs._bCheckCol = true;
-                                    checklist.Add(_arrSpriteIcon[tempCol, row]);
-                                    tempColList.Add(_arrSpriteIcon[tempCol, row]);                                  
-                                }
-                               
+                                    tempColList.Add(_arrSpriteIcon[tempCol, row]);                                                                                               
                             }
                             else
                             {
@@ -411,21 +432,16 @@ public class MainGame : MonoBehaviour {
                             int curId = tempcs._picidx;
                             if (curId == checkPicId && tempcs._bCheckCol == false)
                             {
-                                if (tempcs._curState == BlockAni.BlockState.WaitingDel)
+                                if (tempcs._curState == BlockAni.BlockState.CountDown)
                                 {
-                                    WaitingForDelStruct tempstruct = getWaitingStructById(tempcs._uniqueId);
-                                    tempstruct.pushWaitingDelObject(_arrSpriteIcon[tempCol, row]);
-                                    tempstruct.resetTime();
-                                    tempcs._bCheckCol = true;
-                                    checklist.Add(_arrSpriteIcon[tempCol, row]);
-                                    break;
+                                    //isColHaveDeling = true;
+                                    delingColIdx = tempcs._uniqueId;
                                 }
-                                else
-                                {
+                                
                                     tempcs._bCheckCol = true;
                                     checklist.Add(_arrSpriteIcon[tempCol, row]);
                                     tempColList.Add(_arrSpriteIcon[tempCol, row]);
-                                }
+                                
                                
                             }
                             else
@@ -451,21 +467,16 @@ public class MainGame : MonoBehaviour {
                             int curId = tempcs._picidx;
                             if (curId == checkPicId && tempcs._bCheckRow == false)
                             {
-                                if (tempcs._curState == BlockAni.BlockState.WaitingDel)
+                                if (tempcs._curState == BlockAni.BlockState.CountDown)
                                 {
-                                    WaitingForDelStruct tempstruct = getWaitingStructById(tempcs._uniqueId);
-                                    tempstruct.pushWaitingDelObject(_arrSpriteIcon[col, tempRow]);
-                                    tempstruct.resetTime();
-                                    tempcs._bCheckRow = true;
-                                    checklist.Add(_arrSpriteIcon[col, tempRow]);
-                                    break;
+                                    //isRowHaveDeling = true;
+                                    delingRowIdx = tempcs._uniqueId;
                                 }
-                                else
-                                {
+                                
                                     tempRowList.Add(_arrSpriteIcon[col, tempRow]);
                                     tempcs._bCheckRow = true;
                                     checklist.Add(_arrSpriteIcon[col, tempRow]);
-                                }
+                                
                             
                                 
                             }
@@ -491,23 +502,14 @@ public class MainGame : MonoBehaviour {
                             int curId = tempcs._picidx;
                             if (curId == checkPicId && tempcs._bCheckRow == false)
                             {
-                                if (tempcs._curState == BlockAni.BlockState.WaitingDel)
+                                if (tempcs._curState == BlockAni.BlockState.CountDown)
                                 {
-                                    WaitingForDelStruct tempstruct = getWaitingStructById(tempcs._uniqueId);
-                                    tempstruct.pushWaitingDelObject(_arrSpriteIcon[col, tempRow]);
-                                    tempstruct.resetTime();
-                                    tempcs._bCheckRow = true;
-                                    checklist.Add(_arrSpriteIcon[col, tempRow]);
-                                    break;
+                                    //isRowHaveDeling = true;
+                                    delingRowIdx = tempcs._uniqueId;
                                 }
-                                else
-                                {
-                                    tempRowList.Add(_arrSpriteIcon[col, tempRow]);
-                                    tempcs._bCheckRow = true;
-                                    checklist.Add(_arrSpriteIcon[col, tempRow]);
-                                }
-
-                               
+                                tempRowList.Add(_arrSpriteIcon[col, tempRow]);
+                                tempcs._bCheckRow = true;
+                                checklist.Add(_arrSpriteIcon[col, tempRow]);                               
                             }
                             else
                             {
@@ -525,12 +527,12 @@ public class MainGame : MonoBehaviour {
                     bool isColNumFit = false;
                     bool isRowNumFit = false;
                    
-                    if (tempColList.Count >= _curNeedComboNum)
+                    if (tempColList.Count >= _curNeedComboNum - 1)
                     {
                         isColNumFit = true;
                     }
 
-                    if (tempRowList.Count >= _curNeedComboNum)
+                    if (tempRowList.Count >= _curNeedComboNum - 1)
                     {
                         isRowNumFit = true;
                     }
@@ -539,6 +541,11 @@ public class MainGame : MonoBehaviour {
 
                     if (isColNumFit)
                     {
+                        if (delingColIdx != -1)
+                        {
+                            removeWaitingStructById(delingColIdx);
+                        }
+
                         for (int n = 0; n < tempColList.Count; n++)
                         {
                             temp.pushWaitingDelObject(tempColList[n]);
@@ -547,14 +554,21 @@ public class MainGame : MonoBehaviour {
 
                     if (isRowNumFit)
                     {
+                        if (delingRowIdx != -1)
+                        {
+                            removeWaitingStructById(delingRowIdx);
+                        }
                         for (int n = 0; n < tempRowList.Count; n++)
                         {
                             temp.pushWaitingDelObject(tempRowList[n]);
                         }
                     }
 
+                    
+
                     if (isColNumFit || isRowNumFit)
                     {
+                        temp.pushWaitingDelObject(_arrSpriteIcon[col, row]);
                         _arrNeedDelList.Add(temp);
                     }
                 }
@@ -580,6 +594,16 @@ public class MainGame : MonoBehaviour {
         }
 
         return null;
+    }
+
+
+    public void removeWaitingStructById(int id)
+    {        
+        for (int i = _arrNeedDelList.Count - 1; i >= 0; i--)
+        {
+            if(_arrNeedDelList[i]._uniqueId == id)
+                _arrNeedDelList.RemoveAt(i);
+        }
     }
 }
 
