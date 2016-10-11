@@ -19,6 +19,12 @@ public class WaitingForDelStruct
         if (!pushobject)
             Debug.Log("arr");
 
+        _waitingList.ForEach(delegate (GameObject temp)
+        {
+            if (temp.Equals(pushobject))
+                return;
+        });
+
         BlockAni cs = (pushobject).GetComponent<BlockAni>();
         cs._curState = (BlockAni.BlockState.CountDown);
         cs._uniqueId = _uniqueId;
@@ -33,8 +39,11 @@ public class WaitingForDelStruct
             _activity = false;
             foreach (GameObject temp in _waitingList)
             {
+                if (temp == null)
+                    Debug.Assert(true);
                 BlockAni cs = (temp).GetComponent<BlockAni>();
                 cs._curState = (BlockAni.BlockState.ShouldDel);
+                cs._uniqueId = -1;
             }
             
         }
@@ -52,6 +61,7 @@ public class WaitingForDelStruct
         {
             BlockAni cs = (temp).GetComponent<BlockAni>();
             cs._curState = (BlockAni.BlockState.Stand);
+            //cs._uniqueId = -1;
         }
     }
 }

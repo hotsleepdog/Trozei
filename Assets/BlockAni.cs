@@ -24,7 +24,7 @@ public class BlockAni : MonoBehaviour {
     public bool _bCheckCol { get; set; }
     void Awake()
     {
-        //_curState = BlockState.Down;
+        _uniqueId = -1;
     }
 
     // Use this for initialization
@@ -36,7 +36,12 @@ public class BlockAni : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-      
+        if (_curState == BlockState.CountDown)
+            GetComponent<SpriteRenderer>().color = new Color(0, 0, 1);
+        else
+        {
+            GetComponent<SpriteRenderer>().color = new Color(1, 1, 1);
+        }
     }
 
     public Vector2 getPosInArry(){
@@ -62,6 +67,12 @@ public class BlockAni : MonoBehaviour {
     public void setPosByArrIdx(int x, int y) {
         Vector2 truepos = new Vector2(GameConfig.TROZEI_AREA_STARTPOS.x + x * GameConfig.TROZEI_SIZE + GameConfig.TROZEI_SIZEOFF, GameConfig.TROZEI_AREA_STARTPOS.y + y * GameConfig.TROZEI_SIZE + GameConfig.TROZEI_SIZEOFF);
         transform.position = new Vector3(truepos.x, truepos.y, transform.position.z);
+    }
+
+    public void setPosYByArrIdx(int y)
+    {
+        float truey = GameConfig.TROZEI_AREA_STARTPOS.y + y * GameConfig.TROZEI_SIZE + GameConfig.TROZEI_SIZEOFF;
+        transform.position = new Vector3(transform.position.x, truey, transform.position.z);
     }
 
     public void updatePos() {

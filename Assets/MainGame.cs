@@ -91,6 +91,7 @@ public class MainGame : MonoBehaviour {
                 break;
             case GameStage.NOR:
                 _curState = _norGameState;
+                Debug.Log("stage change check");
                 checkDel();
                 break;
             default:
@@ -182,10 +183,22 @@ public class MainGame : MonoBehaviour {
         }
     }
 
+    public void addWaitingForDelStruct(WaitingForDelStruct wait)
+    {
+        bool find = false;
+        for (int i = _arrNeedDelList.Count - 1; i >= 0; i--)
+        {
+            if (wait._uniqueId == _arrNeedDelList[i]._uniqueId)
+                Debug.Break();
+        }
+
+        _arrNeedDelList.Add(wait);
+    }
+
     // Update is called once per frames
     void Update()
     {
-        if (Time.time >= _creatTargetTime && flag < 15)
+        if (Time.time >= _creatTargetTime && flag < 35)
         {
             int idx = Random.Range(0, 3);
             int x = Random.Range(0, GameConfig.GAMECOLUMN);    
@@ -193,7 +206,7 @@ public class MainGame : MonoBehaviour {
             temp.GetComponent<BlockAni>().setPosByArrIdx(x, GameConfig.GAMEROW - 1);
             temp.GetComponent<BlockAni>()._curState = (BlockAni.BlockState.TopDown);           
             temp.GetComponent<BlockAni>()._lastPos = new Vector2(x, GameConfig.GAMEROW - 1);
-            temp.GetComponent<BlockAni>()._picidx = 4;
+            temp.GetComponent<BlockAni>()._picidx = idx;
 
             _creatTargetTime = Time.time + _newBlcokDur;
             _arrAllBlock.Add(temp);
@@ -209,6 +222,11 @@ public class MainGame : MonoBehaviour {
 
     public void tryDelBlocks()
     {
+        if (_arrNeedDelList.Count > 1)
+        {
+            //Debug.Break();
+        }
+
         for (int i = _arrNeedDelList.Count - 1; i >= 0; i--)
         {
             _arrNeedDelList[i].updateTime();
@@ -285,12 +303,15 @@ public class MainGame : MonoBehaviour {
 
     public void updatePos()
     {
+        bool needcheck = false;
         for (int i = 0; i < _arrAllBlock.Count; i++)
         {
 
             BlockAni cs = (_arrAllBlock[i]).GetComponent<BlockAni>();
 
-            if (cs._curState == BlockAni.BlockState.CountDown || cs._curState == BlockAni.BlockState.MoveUpDown || cs._curState == BlockAni.BlockState.MoveLR  || cs._curState == BlockAni.BlockState.ShouldDel)
+            if (cs._curState == BlockAni.BlockState.CountDown || cs._curState == BlockAni.BlockState.MoveUpDown 
+                //|| cs._curState == BlockAni.BlockState.MoveLR  
+                || cs._curState == BlockAni.BlockState.ShouldDel)
             {
                 continue;
             }
@@ -305,11 +326,12 @@ public class MainGame : MonoBehaviour {
            int collast = (int)csposlast.x;
            if (cspos.y < 0)
            {
-                cs.setPosByArrIdx(col, 0);
-                if(cs._curState != BlockAni.BlockState.Stand)
+                //cs.setPosByArrIdx(col, 0);
+                cs.setPosYByArrIdx(0);
+                if (cs._curState != BlockAni.BlockState.Stand)
                 {
                     Debug.Log("check < 0");
-                    checkDel();
+                    needcheck = true;
                 }
                 cs._curState = BlockAni.BlockState.Stand;
                 cspos.y = 0;
@@ -323,11 +345,12 @@ public class MainGame : MonoBehaviour {
                     {
                         if (_arrSpriteIcon[col, row] != _arrAllBlock[i])
                         {
-                            cs.setPosByArrIdx(col, row + 1);
+                            //cs.setPosByArrIdx(col, row + 1);
+                            cs.setPosYByArrIdx(row + 1);
                             if (cs._curState != BlockAni.BlockState.Stand)
                             {
                                 Debug.Log("check down");
-                                checkDel();
+                                needcheck = true;
                             }
                            cs._curState = (BlockAni.BlockState.Stand);
                         }
@@ -353,12 +376,27 @@ public class MainGame : MonoBehaviour {
             }
             
         }
+
+        if (needcheck)
+            checkDel();
     }
 
 
     public void checkDel()
     {
-        List<GameObject> checklist = new List<GameObject>();
+        if (_curState == _moveGameState)
+            return;
+
+        //for (int i = 0; i < _arrAllBlock.Count; i++)
+        //{
+
+        //    BlockAni cs = (_arrAllBlock[i]).GetComponent<BlockAni>();
+
+        //    if (cs._curState == BlockAni.BlockState.ReDown)
+        //        return;           
+        //}
+
+            List<GameObject> checklist = new List<GameObject>();
         for (int row = 0; row < GameConfig.GAMEROW; row++)
         {
             for(int col = 0; col < GameConfig.GAMECOLUMN; col++)
@@ -377,20 +415,23 @@ public class MainGame : MonoBehaviour {
                     BlockAni cs = _arrSpriteIcon[col, row].GetComponent<BlockAni>();
                     int checkPicId = cs._picidx;
 
-                    if (cs._curState == BlockAni.BlockState.CountDown || cs._curState == BlockAni.BlockState.ShouldDel)
+                    if (cs._curState == BlockAni.BlockState.CountDown || cs._curState == BlockAni.BlockState.ShouldDel || cs._curState == BlockAni.BlockState.MoveLR || cs._curState == BlockAni.BlockState.MoveUpDown)
                     {
                         break;
                     }
 
-                    if (cs._bCheckCol == false)
-                    {
-                        cs._bCheckCol = true;                
-                        checklist.Add(_arrSpriteIcon[col, row]);
-                    }
-                    else
+                    if (cs._bCheckCol == true && cs._bCheckRow == true)
                     {
                         break;
                     }
+                    else
+                    {
+                        cs._bCheckCol = true;
+                        cs._bCheckRow = true;
+                        checklist.Add(_arrSpriteIcon[col, row]);
+                    }
+
+
 
                     int tempCol = col + 1;
                     while (tempCol != GameConfig.GAMECOLUMN)
@@ -539,37 +580,83 @@ public class MainGame : MonoBehaviour {
 
                     var temp = GameConfig.createStruct();
 
-                    if (isColNumFit)
+                    if (isColNumFit && !isRowNumFit)
                     {
                         if (delingColIdx != -1)
                         {
-                            removeWaitingStructById(delingColIdx);
+                            temp = getWaitingStructById(delingColIdx);
+                            for (int n = 0; n < tempColList.Count; n++)
+                            {
+                                temp.pushWaitingDelObject(tempColList[n]);
+                            }
+
+                            temp.pushWaitingDelObject(_arrSpriteIcon[col, row]);
+                        }
+                        else
+                        {
+                            for (int n = 0; n < tempColList.Count; n++)
+                            {
+                                temp.pushWaitingDelObject(tempColList[n]);
+                            }
+
+                            temp.pushWaitingDelObject(_arrSpriteIcon[col, row]);
+                            addWaitingForDelStruct(temp);
+                        }                    
+                    }
+
+                    else if (isRowNumFit && !isColNumFit)
+                    {
+                        if (delingRowIdx != -1)
+                        {
+                            temp = getWaitingStructById(delingRowIdx);
+                            for (int n = 0; n < tempRowList.Count; n++)
+                            {
+                                temp.pushWaitingDelObject(tempRowList[n]);
+                            }
+
+
+                            temp.pushWaitingDelObject(_arrSpriteIcon[col, row]);
+                        }
+                        else
+                        {
+                            for (int n = 0; n < tempRowList.Count; n++)
+                            {
+                                temp.pushWaitingDelObject(tempRowList[n]);
+                            }
+
+
+                            temp.pushWaitingDelObject(_arrSpriteIcon[col, row]);
+                            addWaitingForDelStruct(temp);
+                        }
+                       
+                    }
+                    else if (isRowNumFit && isColNumFit)
+                    {
+                        if (delingRowIdx != -1)
+                        {
+                            temp = getWaitingStructById(delingRowIdx);
+                        }
+                        else if (delingColIdx != -1)
+                        {
+                            temp = getWaitingStructById(delingColIdx);
+                        }
+                        else
+                        {
+                            addWaitingForDelStruct(temp);
+                        }
+
+                        for (int n = 0; n < tempRowList.Count; n++)
+                        {
+                            temp.pushWaitingDelObject(tempRowList[n]);
                         }
 
                         for (int n = 0; n < tempColList.Count; n++)
                         {
                             temp.pushWaitingDelObject(tempColList[n]);
                         }
-                    }
 
-                    if (isRowNumFit)
-                    {
-                        if (delingRowIdx != -1)
-                        {
-                            removeWaitingStructById(delingRowIdx);
-                        }
-                        for (int n = 0; n < tempRowList.Count; n++)
-                        {
-                            temp.pushWaitingDelObject(tempRowList[n]);
-                        }
-                    }
-
-                    
-
-                    if (isColNumFit || isRowNumFit)
-                    {
                         temp.pushWaitingDelObject(_arrSpriteIcon[col, row]);
-                        _arrNeedDelList.Add(temp);
+                       
                     }
                 }
             }
@@ -587,13 +674,23 @@ public class MainGame : MonoBehaviour {
    public WaitingForDelStruct getWaitingStructById(int id)
     {
         int count = _arrNeedDelList.Count;
+        int findnum = 0;
+        WaitingForDelStruct temp = null;
         for (int i = 0; i < count; i++)
         {
             if (id == _arrNeedDelList[i]._uniqueId)
-                return _arrNeedDelList[i];
+            {
+                temp = _arrNeedDelList[i];
+                findnum++;
+                if (findnum >= 2)
+                {
+                    Debug.Break();
+                }
+            }
+                
         }
 
-        return null;
+        return temp;
     }
 
 

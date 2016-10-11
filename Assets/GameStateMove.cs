@@ -138,7 +138,7 @@ public class GameStateMove : BaseGameState {
             {
                 if (_arrSpriteIcon[_moveConfig, i] != null)
                 {
-                    if (_arrSpriteIcon[_moveConfig, i].GetComponent<BlockAni>()._curState == BlockAni.BlockState.Stand)
+                    if (_arrSpriteIcon[_moveConfig, i].GetComponent<BlockAni>()._curState == BlockAni.BlockState.Stand || _arrSpriteIcon[_moveConfig, i].GetComponent<BlockAni>()._curState == BlockAni.BlockState.CountDown)
                         _needMoveArr.Add(_arrSpriteIcon[_moveConfig, i]);
                 }
             }
@@ -187,7 +187,7 @@ public class GameStateMove : BaseGameState {
             {
                 if (_arrSpriteIcon[_moveConfig, i] != null)
                 {
-                    if (_arrSpriteIcon[_moveConfig, i].GetComponent<BlockAni>()._curState == BlockAni.BlockState.Stand)
+                    if (_arrSpriteIcon[_moveConfig, i].GetComponent<BlockAni>()._curState == BlockAni.BlockState.Stand || _arrSpriteIcon[_moveConfig, i].GetComponent<BlockAni>()._curState == BlockAni.BlockState.CountDown)
                         _needMoveArr.Add(_arrSpriteIcon[_moveConfig, i]);
                 }
             }
@@ -209,8 +209,8 @@ public class GameStateMove : BaseGameState {
         {
             BlockAni cs = _needMoveArr[i].GetComponent<BlockAni>();
             if (cs._curState == BlockAni.BlockState.CountDown || cs._curState == BlockAni.BlockState.ShouldDel)
-            {
-              //_mainGame.GetComponent<MainGame>().getWaitingStructById(cs._uniqueId).resetState();
+            {                
+              _mainGame.GetComponent<MainGame>().getWaitingStructById(cs._uniqueId).resetState();
               _mainGame.GetComponent<MainGame>().removeWaitingStructById(cs._uniqueId);              
             }
 
@@ -247,7 +247,10 @@ public class GameStateMove : BaseGameState {
         for (int i = 0; i < _needMoveArr.Count; i++)
         {
             ((GameObject)_needMoveArr[i]).GetComponent<BlockAni>().setLastPosCur();
-            _needMoveArr[i].GetComponent<BlockAni>()._curState = (BlockAni.BlockState.Stand);
+            if(_needMoveArr[i].GetComponent<BlockAni>().getPosInArry().y == GameConfig.GAMEROW - 1)
+                _needMoveArr[i].GetComponent<BlockAni>()._curState = (BlockAni.BlockState.TopDown);
+            else
+                _needMoveArr[i].GetComponent<BlockAni>()._curState = (BlockAni.BlockState.ReDown);
         }
 
         _needMoveArr.Clear();
@@ -267,6 +270,8 @@ public class GameStateMove : BaseGameState {
 
        for (int i = 0; i < _needMoveArr.Count; i++)
         {
+            if (_needMoveArr[i] == null)
+                Debug.Break();
             _needMoveArr[i].GetComponent<Transform>().transform.Translate(_speed * Time.deltaTime);
         }
 
