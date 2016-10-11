@@ -250,7 +250,7 @@ public class GameStateMove : BaseGameState {
             if(_needMoveArr[i].GetComponent<BlockAni>().getPosInArry().y == GameConfig.GAMEROW - 1)
                 _needMoveArr[i].GetComponent<BlockAni>()._curState = (BlockAni.BlockState.TopDown);
             else
-                _needMoveArr[i].GetComponent<BlockAni>()._curState = (BlockAni.BlockState.ReDown);
+                _needMoveArr[i].GetComponent<BlockAni>()._curState = (BlockAni.BlockState.Stand);
         }
 
         _needMoveArr.Clear();

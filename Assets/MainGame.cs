@@ -198,10 +198,12 @@ public class MainGame : MonoBehaviour {
     // Update is called once per frames
     void Update()
     {
-        if (Time.time >= _creatTargetTime && flag < 35)
+        
+        if (Time.time >= _creatTargetTime && flag < 30)
         {
             int idx = Random.Range(0, 3);
-            int x = Random.Range(0, GameConfig.GAMECOLUMN);    
+            int x = Random.Range(0, GameConfig.GAMECOLUMN);
+           
             GameObject temp = Instantiate(_block);
             temp.GetComponent<BlockAni>().setPosByArrIdx(x, GameConfig.GAMEROW - 1);
             temp.GetComponent<BlockAni>()._curState = (BlockAni.BlockState.TopDown);           
@@ -210,7 +212,7 @@ public class MainGame : MonoBehaviour {
 
             _creatTargetTime = Time.time + _newBlcokDur;
             _arrAllBlock.Add(temp);
-
+           
 			flag++;
         }
 
@@ -387,14 +389,14 @@ public class MainGame : MonoBehaviour {
         if (_curState == _moveGameState)
             return;
 
-        //for (int i = 0; i < _arrAllBlock.Count; i++)
-        //{
+        for (int i = 0; i < _arrAllBlock.Count; i++)
+        {
 
-        //    BlockAni cs = (_arrAllBlock[i]).GetComponent<BlockAni>();
+            BlockAni cs = (_arrAllBlock[i]).GetComponent<BlockAni>();
 
-        //    if (cs._curState == BlockAni.BlockState.ReDown)
-        //        return;           
-        //}
+            if (cs._curState == BlockAni.BlockState.ReDown)
+                return;           
+        }
 
             List<GameObject> checklist = new List<GameObject>();
         for (int row = 0; row < GameConfig.GAMEROW; row++)
@@ -417,12 +419,12 @@ public class MainGame : MonoBehaviour {
 
                     if (cs._curState == BlockAni.BlockState.CountDown || cs._curState == BlockAni.BlockState.ShouldDel || cs._curState == BlockAni.BlockState.MoveLR || cs._curState == BlockAni.BlockState.MoveUpDown)
                     {
-                        break;
+                        continue;
                     }
 
                     if (cs._bCheckCol == true && cs._bCheckRow == true)
                     {
-                        break;
+                        continue;
                     }
                     else
                     {
