@@ -216,17 +216,24 @@ public class GameStateMove : BaseGameState {
 
             if (_curInputEvent == GameInputEvent.MoveLeft || _curInputEvent == GameInputEvent.MoveRight)
             {
-                _needMoveArr[i].GetComponent<BlockAni>()._curState = (BlockAni.BlockState.MoveLR);
-                if(_needDelGameObject != null)
-                    _needDelGameObject.GetComponent<BlockAni>()._curState = (BlockAni.BlockState.MoveLR);
+                _needMoveArr[i].GetComponent<BlockAni>()._curState = (BlockAni.BlockState.MoveLR);               
             }
             else if (_curInputEvent == GameInputEvent.MoveUp || _curInputEvent == GameInputEvent.MoveDown)
             {
-                _needMoveArr[i].GetComponent<BlockAni>()._curState = (BlockAni.BlockState.MoveUpDown);
-                if (_needDelGameObject != null)
-                    _needDelGameObject.GetComponent<BlockAni>()._curState = (BlockAni.BlockState.MoveUpDown);
+                _needMoveArr[i].GetComponent<BlockAni>()._curState = (BlockAni.BlockState.MoveUpDown);                
             }
             
+        }
+
+        if (_curInputEvent == GameInputEvent.MoveLeft || _curInputEvent == GameInputEvent.MoveRight)
+        {           
+            if (_needDelGameObject != null)
+                _needDelGameObject.GetComponent<BlockAni>()._curState = (BlockAni.BlockState.MoveLR);
+        }
+        else if (_curInputEvent == GameInputEvent.MoveUp || _curInputEvent == GameInputEvent.MoveDown)
+        {            
+            if (_needDelGameObject != null)
+                _needDelGameObject.GetComponent<BlockAni>()._curState = (BlockAni.BlockState.MoveUpDown);
         }
     }
     public override void leaveState() {

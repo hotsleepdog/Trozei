@@ -29,9 +29,12 @@ public class BlockAni : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
-        string url = "icons/" + _picidx;
-        Sprite sprite0 = Resources.Load<Sprite>(url);
-        GetComponent<SpriteRenderer>().sprite = sprite0;
+        //string url = "icons/" + _picidx;
+        //Sprite sprite0 = Resources.Load<Sprite>(url);
+        //GetComponent<SpriteRenderer>().sprite = sprite0;
+
+        Sprite[] array = Resources.LoadAll<Sprite>("icons/64885");
+        GetComponent<SpriteRenderer>().sprite = array[_picidx];
     }
 	
 	// Update is called once per frame

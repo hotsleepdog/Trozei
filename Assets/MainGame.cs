@@ -38,7 +38,7 @@ public class MainGame : MonoBehaviour {
 
 	void Awake()
 	{
-		_newBlcokDur = 1.0f;
+		_newBlcokDur = 0.5f;
 		_creatTargetTime = Time.time + _newBlcokDur;
 
 		_arrAllBlock = new List<GameObject>();
@@ -51,10 +51,15 @@ public class MainGame : MonoBehaviour {
         _speedValue = GameConfig.SPEED_DOWN;
         _protectInputTime = 0.0f;
         _blockSize = new Vector2(GameConfig.TROZEI_SIZE, GameConfig.TROZEI_SIZE);
-        GetComponent<Camera>().aspect = 480.0f / 800.0f;
+        GetComponent<Camera>().aspect = 640.0f / 960.0f;
         Debug.Log("awark:" + _arrWidth);
 
         _arrNeedDelList = new List<WaitingForDelStruct>();
+    }
+
+    public void OnClickTest()
+    {
+        Debug.Log("click button");
     }
 
     public float getSpeedValue()
@@ -198,17 +203,22 @@ public class MainGame : MonoBehaviour {
     // Update is called once per frames
     void Update()
     {
-        
-        if (Time.time >= _creatTargetTime && flag < 30)
+        int[] arr = new int[]{
+            0,4,5,4,5,0,
+            0,3,3,3,4,0,
+            0,2,2,2,3,0,
+            1,0,0,2,0,0
+        };
+        if (Time.time >= _creatTargetTime && flag < 24)
         {
-            int idx = Random.Range(0, 3);
+            int idx = Random.Range(0, 5);
             int x = Random.Range(0, GameConfig.GAMECOLUMN);
            
             GameObject temp = Instantiate(_block);
-            temp.GetComponent<BlockAni>().setPosByArrIdx(x, GameConfig.GAMEROW - 1);
+            temp.GetComponent<BlockAni>().setPosByArrIdx(flag%6, GameConfig.GAMEROW - 1);
             temp.GetComponent<BlockAni>()._curState = (BlockAni.BlockState.TopDown);           
-            temp.GetComponent<BlockAni>()._lastPos = new Vector2(x, GameConfig.GAMEROW - 1);
-            temp.GetComponent<BlockAni>()._picidx = idx;
+            temp.GetComponent<BlockAni>()._lastPos = new Vector2(flag % 6, GameConfig.GAMEROW - 1);
+            temp.GetComponent<BlockAni>()._picidx = arr[flag];
 
             _creatTargetTime = Time.time + _newBlcokDur;
             _arrAllBlock.Add(temp);
@@ -224,11 +234,6 @@ public class MainGame : MonoBehaviour {
 
     public void tryDelBlocks()
     {
-        if (_arrNeedDelList.Count > 1)
-        {
-            //Debug.Break();
-        }
-
         for (int i = _arrNeedDelList.Count - 1; i >= 0; i--)
         {
             _arrNeedDelList[i].updateTime();
