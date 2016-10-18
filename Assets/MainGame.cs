@@ -51,7 +51,10 @@ public class MainGame : MonoBehaviour {
         _speedValue = GameConfig.SPEED_DOWN;
         _protectInputTime = 0.0f;
         _blockSize = new Vector2(GameConfig.TROZEI_SIZE, GameConfig.TROZEI_SIZE);
-        GetComponent<Camera>().aspect = 640.0f / 960.0f;
+        GetComponent<Camera>().orthographicSize = 320 / GetComponent<Camera>().aspect;
+        Debug.Log("size:" + GetComponent<Camera>().orthographicSize);
+        GetComponent<Camera>().transform.position = new Vector3(320, GetComponent<Camera>().orthographicSize, -10);
+        //GetComponent<Camera>().
         Debug.Log("awark:" + _arrWidth);
 
         _arrNeedDelList = new List<WaitingForDelStruct>();
