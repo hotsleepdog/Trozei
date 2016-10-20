@@ -211,7 +211,8 @@ public class GameStateMove : BaseGameState {
             if (cs._curState == BlockAni.BlockState.CountDown || cs._curState == BlockAni.BlockState.ShouldDel)
             {                
               _mainGame.GetComponent<MainGame>().getWaitingStructById(cs._uniqueId).resetState();
-              _mainGame.GetComponent<MainGame>().removeWaitingStructById(cs._uniqueId);              
+              _mainGame.GetComponent<MainGame>().removeWaitingStructById(cs._uniqueId);
+				ComboMgr.getInstance().sendMessage(ComboMgr.ComboMessage.CANCLE_COUNT_DOWN);
             }
 
             if (_curInputEvent == GameInputEvent.MoveLeft || _curInputEvent == GameInputEvent.MoveRight)

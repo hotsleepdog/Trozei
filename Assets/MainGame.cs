@@ -25,8 +25,9 @@ public class MainGame : MonoBehaviour {
 
     private Vector2 _moveTouchPos;
     private Vector2 _moveWorldPos;
-    private int _curNeedComboNum = 4;
+    public int _curNeedComboNum = 4;
     private List<WaitingForDelStruct> _arrNeedDelList;
+
     public enum GameStage
     {
         NOR = 0,
@@ -231,18 +232,22 @@ public class MainGame : MonoBehaviour {
 
         _curState.StateUpdate();
         HandleInput();
+		ComboMgr.getInstance ().updata (Time.deltaTime);
         tryDelBlocks();
-
     }
 
     public void tryDelBlocks()
     {
+		bool haveCombo = false;
         for (int i = _arrNeedDelList.Count - 1; i >= 0; i--)
         {
             _arrNeedDelList[i].updateTime();
             bool shouldremove = false;
             if (!_arrNeedDelList[i]._activity)
-                shouldremove = true;
+			{
+				shouldremove = true;
+				haveCombo = true;
+			}
 
             if (_arrNeedDelList[i]._needRecovery)
             {
@@ -273,7 +278,13 @@ public class MainGame : MonoBehaviour {
                     }
                 }
             }
-        }      
+        } 
+
+		if (haveCombo) {
+			//startCombo();
+			ComboMgr.getInstance().sendMessage(ComboMgr.ComboMessage.END_COUNT_DOWN);
+			checkDel();
+		}
     }
 
     public Vector2 getPosInArry(Vector2 truepos)
@@ -611,7 +622,9 @@ public class MainGame : MonoBehaviour {
 
                             temp.pushWaitingDelObject(_arrSpriteIcon[col, row]);
                             addWaitingForDelStruct(temp);
-                        }                    
+                        } 
+
+						ComboMgr.getInstance().sendMessage(ComboMgr.ComboMessage.START_COUNT_DOWN);
                     }
 
                     else if (isRowNumFit && !isColNumFit)
@@ -638,7 +651,7 @@ public class MainGame : MonoBehaviour {
                             temp.pushWaitingDelObject(_arrSpriteIcon[col, row]);
                             addWaitingForDelStruct(temp);
                         }
-                       
+						ComboMgr.getInstance().sendMessage(ComboMgr.ComboMessage.START_COUNT_DOWN);
                     }
                     else if (isRowNumFit && isColNumFit)
                     {
@@ -666,7 +679,7 @@ public class MainGame : MonoBehaviour {
                         }
 
                         temp.pushWaitingDelObject(_arrSpriteIcon[col, row]);
-                       
+						ComboMgr.getInstance().sendMessage(ComboMgr.ComboMessage.START_COUNT_DOWN);
                     }
                 }
             }

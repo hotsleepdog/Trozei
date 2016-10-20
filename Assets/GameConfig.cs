@@ -12,6 +12,7 @@ public class GameConfig
     public static Vector2 TROZEI_AREA_STARTPOS = new Vector2(0.0f, 0.0f);
     public static int SPEED_DOWN = 500;
     public static float DEL_DUR = 3.0f;
+	public static float COMBODUR = 1.0f;
     private static int s_waitForDelUniqueIdx = 0;
     public static  WaitingForDelStruct createStruct()
     {
